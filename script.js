@@ -8,7 +8,15 @@ const LOTOS=[
 let isConnected=false,userRole=null,currentLotoId=null,pendingUnlock=false;
 const unlockedLotos=new Set();
 
-function showPage(n){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+n).classList.add('active');window.scrollTo({top:0,behavior:'smooth'});if(n==='dashboard-joueur')renderDashboardJoueur();if(n==='dashboard-orga')renderDashboardOrga();}
+function showPage(n){
+  const orgaPages=['organisateur','dashboard-orga'];
+  if(orgaPages.includes(n)&&userRole!=='organisateur'){openAuthModal();return;}
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+n).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(n==='dashboard-joueur')renderDashboardJoueur();
+  if(n==='dashboard-orga')renderDashboardOrga();
+}
 
 function searchLotos(){
   const rayon=parseInt(document.getElementById('searchRayon').value)||0;
@@ -71,6 +79,7 @@ function loginAs(role){
   document.getElementById('userBadge').style.display='flex';
   document.getElementById('dashJoueurLink').style.display=(role==='joueur')?'inline':'none';
   document.getElementById('dashOrgaLink').style.display=(role==='organisateur')?'inline':'none';
+  document.getElementById('orgaLink').style.display=(role==='organisateur')?'inline':'none';
   closeModal('authModal');
   if(pendingUnlock){pendingUnlock=false;openUnlockModal();}
 }
@@ -85,6 +94,7 @@ function logout(){
   document.getElementById('userBadge').style.display='none';
   document.getElementById('dashJoueurLink').style.display='none';
   document.getElementById('dashOrgaLink').style.display='none';
+  document.getElementById('orgaLink').style.display='none';
   showPage('home');
 }
 
@@ -92,7 +102,7 @@ function switchTab(n){document.querySelectorAll('.modal-tab').forEach((t,i)=>t.c
 
 function addLotRow(){const rows=document.getElementById('lotRows');const row=document.createElement('div');row.className='lot-input-row';row.innerHTML=`<input type="text" class="lot-name-in" placeholder="Nom du lot"><input type="number" class="lot-val-in" placeholder="Valeur €" oninput="updateCommission()">`;rows.appendChild(row);}
 function updateCommission(){const vals=[...document.querySelectorAll('.lot-val-in')].map(i=>parseFloat(i.value)||0);const max=Math.max(...vals,0);const comm=max*0.10;document.getElementById('commAmt').textContent=comm.toFixed(2).replace('.',',')+' €';document.getElementById('commDetail').textContent=max>0?`Plus gros lot : ${max} € → commission : ${comm.toFixed(2)} €`:'Saisissez vos lots pour calculer';}
-function publierLoto(){const vals=[...document.querySelectorAll('.lot-val-in')].map(i=>parseFloat(i.value)||0);const max=Math.max(...vals,0);if(!max){alert('Veuillez renseigner au moins un lot avec une valeur.');return;}document.getElementById('orgaPayAmt').textContent=(max*0.10).toFixed(2)+' €';document.getElementById('orgaPayModal').classList.add('open');}
+function publierLoto(){if(userRole!=='organisateur'){openAuthModal();return;}const vals=[...document.querySelectorAll('.lot-val-in')].map(i=>parseFloat(i.value)||0);const max=Math.max(...vals,0);if(!max){alert('Veuillez renseigner au moins un lot avec une valeur.');return;}document.getElementById('orgaPayAmt').textContent=(max*0.10).toFixed(2)+' €';document.getElementById('orgaPayModal').classList.add('open');}
 function doOrgaPaiement(){closeModal('orgaPayModal');document.getElementById('successBanner').style.display='block';document.querySelector('.btn-publier').style.display='none';}
 
 function closeModal(id){document.getElementById(id).classList.remove('open');}
